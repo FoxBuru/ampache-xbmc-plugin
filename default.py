@@ -6,7 +6,7 @@ import socket
 BASE_RESOURCE_PATH = os.path.join( os.getcwd(), "resources" )
 sys.path.append( os.path.join( BASE_RESOURCE_PATH, "lib" ) )
 
-import random, xbmcplugin, xbmcgui, hashlib, datetime, time, urllib,urllib2, elementtree.ElementTree as ET
+import random, xbmcplugin, xbmcgui, hashlib, datetime, time, urllib,urllib2, xml.etree.ElementTree as ET
 
 try:
     # new XBMC 10.05 addons:
