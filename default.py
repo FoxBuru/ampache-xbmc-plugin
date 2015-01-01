@@ -1,36 +1,16 @@
-import sys
-import os
-import time
-import socket
+import sys, os, time, datetime, socket, random, hashlib
+import xbmcplugin, xbmcgui, requests, xml.etree.ElementTree as ET
+
+# Constants
+__plugid__ = "plugin.audio.ampache"
+__name__ = "Ampache"
+__author__ = "FoxBuru"
+
+ampache = xbmcaddon.Addon(id=__plugid__)
+
 # Shared resources
-BASE_RESOURCE_PATH = os.path.join( os.getcwd(), "resources" )
-sys.path.append( os.path.join( BASE_RESOURCE_PATH, "lib" ) )
-
-import random, xbmcplugin, xbmcgui, hashlib, datetime, time, urllib,urllib2, xml.etree.ElementTree as ET
-
-try:
-    # new XBMC 10.05 addons:
-    import xbmcaddon
-except ImportError:
-    # old XBMC - create fake xbmcaddon module with same interface as new XBMC 10.05
-    class xbmcaddon:
-        """ fake xbmcaddon module """
-        __version__ = "(old XBMC)"
-        class Addon:
-            """ fake xbmcaddon.Addon class """
-            def __init__(self, id):
-                self.id = id
-            def getSetting(self, key):
-                return xbmcplugin.getSetting(key)
-            def setSetting(self, key, value):
-                xbmcplugin.setSetting(key, value)
-            def openSettings(self, key, value):
-                xbmc.openSettings()
-            def getLocalizedString(self, id):
-                return xbmc.getLocalizedString(id)
-
-ampache = xbmcaddon.Addon("plugin.audio.ampache")
-imagepath = os.path.join(os.getcwd().replace(';', ''),'resources','images')
+BASE_RESOURCE_PATH = xbmc.translatePath(os.path.join(ampache.getAddonInfo('path'), 'resources', 'lib' ))
+imagepath = xbmc.translatePath(os.path.join(ampache.getAddonInfo('path'), 'resources', 'images' ))
 
 def addLink(name,url,iconimage,node):
         ok=True
@@ -56,7 +36,7 @@ def addLinks(elem):
         song_id = int(node.attrib["id"])
         liz.addContextMenuItems(cm)
         track_parameters = { "mode": 9, "object_id": song_id}
-        url = sys.argv[0] + '?' + urllib.urlencode(track_parameters)
+        url = sys.argv[0] + '?' + track_parameters
         tu= (url,liz)
         li.append(tu)
     ok=xbmcplugin.addDirectoryItems(handle=int(sys.argv[1]),items=li,totalItems=len(elem))
@@ -88,7 +68,7 @@ def addDir(name,object_id,mode,iconimage,elem=None):
         liz.addContextMenuItems(cm)
     except:
         pass
-    u=sys.argv[0]+"?object_id="+str(object_id)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)
+    u=sys.argv[0]+"?object_id="+str(object_id)+"&mode="+str(mode)+"&name="+name
     ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
     return ok
 
@@ -136,10 +116,8 @@ def AMPACHECONNECT():
     myURL += myPassphrase + "&timestamp=" + myTimeStamp
     myURL += '&version=350001&user=' + ampache.getSetting("username")
     xbmc.log(myURL,xbmc.LOGNOTICE)
-    req = urllib2.Request(myURL)
-    response = urllib2.urlopen(req)
-    tree=ET.parse(response)
-    response.close()
+    response = requests.get(myURL)
+    tree=ET.parse(response.text)
     elem = tree.getroot()
     token = elem.findtext('auth')
     ampache.setSetting('token',token)
@@ -148,20 +126,16 @@ def AMPACHECONNECT():
 
 def ampache_http_request(action,add=None, filter=None, limit=5000, offset=0):
     thisURL = build_ampache_url(action,filter=filter,add=add,limit=limit,offset=offset)
-    req = urllib2.Request(thisURL)
-    response = urllib2.urlopen(req)
-    tree=ET.parse(response)
-    response.close()
+    response = requests.get(thisURL)
+    tree=ET.parse(response.text)
     elem = tree.getroot()
     if elem.findtext("error"):
         errornode = elem.find("error")
         if errornode.attrib["code"]=="401":
             elem = AMPACHECONNECT()
             thisURL = build_ampache_url(action,filter=filter,add=add,limit=limit,offset=offset)
-            req = urllib2.Request(thisURL)
-            response = urllib2.urlopen(req)
-            tree=ET.parse(response)
-            response.close()
+            response = requests.get(thisURL)
+            tree=ET.parse(response.text)
             elem = tree.getroot()
     return elem
     
@@ -210,7 +184,7 @@ def build_ampache_url(action,filter=None,add=None,limit=5000,offset=0):
     thisURL += '&limit=' +str(limit)
     thisURL += '&offset=' +str(offset)
     if filter:
-        thisURL += '&filter=' +urllib.quote_plus(str(filter))
+        thisURL += '&filter=' +str(filter)
     if add:
         thisURL += '&add=' + add
     return thisURL
@@ -265,7 +239,7 @@ mode=None
 object_id=None
 
 try:
-        name=urllib.unquote_plus(params["name"])
+        name=params["name"]
 except:
         pass
 try:

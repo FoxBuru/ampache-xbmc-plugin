@@ -1,7 +1,9 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<addon id="plugin.audio.ampache" version="0.4.3" name="Ampache" provider-name="FoxBuru">
+<addon id="plugin.audio.ampache" name="Ampache" version="0.4.4" provider-name="FoxBuru">
   <requires>
-   <import addon="xbmc.python" version="2.1.0"/>
+   <import addon="xbmc.python"			version="2.1.0"/>
+   <import addon="script.module.elementtree"	version="1.2.7"/>
+   <import addon="script.module.requests"	version="0.13.2"/>
   </requires>
   <extension point="xbmc.python.pluginsource" library="default.py">
    <provides>audio</provides>
