@@ -1,5 +1,5 @@
 import sys, os, time, datetime, socket, random, hashlib
-import xbmcplugin, xbmcgui, requests, xml.etree.ElementTree as ET
+import xbmcplugin, xbmcgui, xbmcaddon, requests, xml.etree.ElementTree as ET
 
 # Constants
 __plugid__ = "plugin.audio.ampache"
