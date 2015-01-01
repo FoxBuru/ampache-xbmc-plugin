@@ -117,7 +117,7 @@ def AMPACHECONNECT():
     myURL += '&version=350001&user=' + ampache.getSetting("username")
     xbmc.log(myURL,xbmc.LOGNOTICE)
     response = requests.get(myURL)
-    tree=ET.parse(response.text)
+    tree = ET.ElementTree(ET.fromstring(response.content))
     elem = tree.getroot()
     token = elem.findtext('auth')
     ampache.setSetting('token',token)
@@ -127,7 +127,7 @@ def AMPACHECONNECT():
 def ampache_http_request(action,add=None, filter=None, limit=5000, offset=0):
     thisURL = build_ampache_url(action,filter=filter,add=add,limit=limit,offset=offset)
     response = requests.get(thisURL)
-    tree=ET.parse(response.text)
+    tree = ET.ElementTree(ET.fromstring(response.content))
     elem = tree.getroot()
     if elem.findtext("error"):
         errornode = elem.find("error")
@@ -135,7 +135,7 @@ def ampache_http_request(action,add=None, filter=None, limit=5000, offset=0):
             elem = AMPACHECONNECT()
             thisURL = build_ampache_url(action,filter=filter,add=add,limit=limit,offset=offset)
             response = requests.get(thisURL)
-            tree=ET.parse(response.text)
+            tree = ET.ElementTree(ET.fromstring(response.content))
             elem = tree.getroot()
     return elem
     
