@@ -35,8 +35,7 @@ def addLinks(elem):
         song_elem = node.find("song")
         song_id = int(node.attrib["id"])
         liz.addContextMenuItems(cm)
-        track_parameters = { "mode": 9, "object_id": song_id}
-        url = sys.argv[0] + '?' + track_parameters
+        url = "{0}?{1}={2}&{3}={4}".format(sys.argv[0], 'mode', '9', 'object_id', song_id)
         tu= (url,liz)
         li.append(tu)
     ok=xbmcplugin.addDirectoryItems(handle=int(sys.argv[1]),items=li,totalItems=len(elem))
