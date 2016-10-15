@@ -11,6 +11,7 @@ ampache = xbmcaddon.Addon(id=__plugid__)
 # Shared resources
 BASE_RESOURCE_PATH = xbmc.translatePath(os.path.join(ampache.getAddonInfo('path'), 'resources', 'lib' ))
 imagepath = xbmc.translatePath(os.path.join(ampache.getAddonInfo('path'), 'resources', 'images' ))
+xstr = lambda s: s or ""
 
 def addLink(name,url,iconimage,node):
         ok=True
@@ -27,6 +28,9 @@ def addLinks(elem):
     ok=True
     li=[]
     for node in elem:
+        if node.tag == 'total_count':
+            continue
+        
         cm = []
         liz=xbmcgui.ListItem(label=node.findtext("title").encode("utf-8"), thumbnailImage=node.findtext("art"))
         liz.setInfo( "music", { "title": node.findtext("title").encode("utf-8"), "artist": node.findtext("artist"), "album": node.findtext("album"), "size": node.findtext("size"), "duration": node.findtext("time"),  "year": str(node.findtext("year")) } )
@@ -56,8 +60,8 @@ def play_track(id):
     xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=li)
 
 # Main function for adding xbmc plugin elements
-def addDir(name,object_id,mode,iconimage,elem=None):
-    liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png",thumbnailImage=iconimage)
+def addDir(name,object_id,mode,iconimage="DefaultFolder.png",elem=None):
+    liz=xbmcgui.ListItem(name, iconImage=iconimage,thumbnailImage=iconimage)
     liz.setInfo( type="Music", infoLabels={ "Title": name } )
     try:
         artist_elem = elem.find("artist")
@@ -73,6 +77,7 @@ def addDir(name,object_id,mode,iconimage,elem=None):
 
 def get_params():
     param=[]
+    xbmc.log("Params: " + " ".join(sys.argv), xbmc.LOGNOTICE)
     paramstring=sys.argv[2]
     if len(paramstring)>=2:
             params=sys.argv[2]
@@ -124,7 +129,12 @@ def AMPACHECONNECT():
     return elem
 
 def ampache_http_request(action,add=None, filter=None, limit=5000, offset=0):
+    msg = "Building url with params: %s,%s,%s,%d,%d" % (xstr(action), xstr(add), xstr(filter), limit, offset)
+    xbmc.log(msg, xbmc.LOGNOTICE)
+             
     thisURL = build_ampache_url(action,filter=filter,add=add,limit=limit,offset=offset)
+    xbmc.log("Resultant url is: " + thisURL, xbmc.LOGNOTICE)
+    
     response = requests.get(thisURL)
     tree = ET.ElementTree(ET.fromstring(response.content))
     elem = tree.getroot()
@@ -152,9 +162,12 @@ def get_items(object_type, artist=None, add=None, filter=None, limit=5000):
     elif object_type == 'albums':
         mode = 3
     for node in elem:
-        if object_type == 'albums':
+        xbmc.log("Node tag is: " + node.tag, xbmc.LOGNOTICE)
+        if node.tag == 'total_count':
+            continue
+        if (object_type == 'albums') or (object_type == 'artist'):
             image = node.findtext("art")
-        addDir(node.findtext("name").encode("utf-8"),node.attrib["id"],mode,image,node)
+        addDir(xstr(node.findtext("name")).encode("utf-8"),node.attrib["id"],mode,image,node)
 
 def GETSONGS(objectid=None,filter=None,add=None,limit=5000,offset=0, artist_bool=False):
     xbmcplugin.setContent(int(sys.argv[1]), 'songs')
@@ -251,8 +264,11 @@ except:
         pass
 
 print "Mode: "+str(mode)
+xbmc.log("Mode:"+str(mode),xbmc.LOGNOTICE)
 print "Name: "+str(name)
+xbmc.log("Name:"+str(name),xbmc.LOGNOTICE)
 print "ObjectID: "+str(object_id)
+xbmc.log("ObjectID:"+str(object_id),xbmc.LOGNOTICE)
 
 if mode==None:
     print ""
@@ -289,7 +305,8 @@ elif mode==1:
         get_items(object_type="artists",add=nd.isoformat())
     else:
         elem = AMPACHECONNECT()
-        limit=elem.findtext("artists")
+        limit=int(elem.findtext("artists"))
+        xbmc.log("Get items of type artists and limit %d" % limit, xbmc.LOGNOTICE)
         get_items(object_type="artists", limit=limit)
        
 elif mode==2:
@@ -322,7 +339,7 @@ elif mode==2:
             get_items(object_type="albums",artist=object_id)
         else:
             elem = AMPACHECONNECT()
-            limit=elem.findtext("albums")
+            limit=int(elem.findtext("albums"))
             get_items(object_type="albums", limit=limit)
         
 elif mode==3:
